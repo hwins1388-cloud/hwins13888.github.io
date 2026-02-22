@@ -1,548 +1,579 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Map → Gallery → 360 (Back Buttons)</title>
-<link href="https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/GmarketSans.css" rel="stylesheet">
-</head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Map → Gallery → 360 (Back Buttons)</title>
 
-<style>
-  html, body { margin: 0; height: 100%; overflow: hidden; background: #000; }
+  <!-- 폰트 -->
+  <link href="https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/GmarketSans.css" rel="stylesheet">
+
+  <style>
+
+  html, body {
+    margin: 0;
+    height: 100%;
+    overflow: hidden;
+    background: #000;
+    font-family: 'GmarketSansMedium', sans-serif;
+  }
+
+  *, *::before, *::after {
+    font-family: inherit;
+  }
 
   /* ===== 360 뷰어 ===== */
   #viewerRoot { position: fixed; inset: 0; }
+    /* ===== 360 뷰어 ===== */
+    #viewerRoot { position: fixed; inset: 0; }
 
-  /* ===== 상단 네비(지도로/갤러리로) ===== */
-  #topNav {
-    position: fixed;
-    top: 12px; right: 12px;
-    z-index: 60;
-    display: flex;
-    gap: 10px;
-  }
-  .navBtn {
-    padding: 8px 12px;
-    border-radius: 10px;
-    background: rgba(0,0,0,0.6);
-    color: #fff;
-    font: 700 13px/1 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-    cursor: pointer;
-    user-select: none;
-    border: 1px solid rgba(255,255,255,0.14);
-  }
-  .navBtn:hover { filter: brightness(1.05); }
-  .navBtn.disabled {
-    opacity: 0.45;
-    pointer-events: none;
-  }
+    /* ===== 상단 네비(지도로/갤러리로) ===== */
+    #topNav {
+      position: fixed;
+      top: 22px; left: 12px;
+      z-index: 60;
+      display: flex;
+      gap: 8px;
+    }
+    .navBtn {
+      padding: 10px 16px;                 /* ✅ 조금 키움 */
+      border-radius: 999px;              /* ✅ 더 둥글게 */
+      background: rgba(0,0,0,0.62);
+      color: #fff;
+      font-family: 'GmarketSansBold';    /* ✅ Gmarket Sans 적용 */
+      font-size: 18px;                   /* ✅ 글씨 키움 */
+      line-height: 1;
+      cursor: pointer;
+      user-select: none;
+      border: 1px solid rgba(255,255,255,0.16);
+      backdrop-filter: blur(8px);
+      transition: transform .15s ease, filter .15s ease, background .15s ease;
+    }
+    .navBtn:hover { filter: brightness(1.08); transform: translateY(-1px); }
+    .navBtn.disabled {
+      opacity: 0.45;
+      pointer-events: none;
+    }
 
-  /* ===== 지도(전체화면) ===== */
-  #mapOverlay {
-    position: fixed; inset: 0;
-    z-index: 20;
-    display: none;
-    background: #000;
-  }
-  #mapOverlay img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    position: absolute; inset: 0;
-    user-select: none;
-    -webkit-user-drag: none;
-  }
+    /* ===== 지도(전체화면) ===== */
+    #mapOverlay {
+      position: fixed; inset: 0;
+      z-index: 20;
+      display: none;
+      background: #000;
+    }
+    #mapOverlay img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      position: absolute; inset: 0;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
 
-  /* ===== 핀 ===== */
-  .pin {
-    position: absolute;
-    width: 44px; height: 44px;
-    border-radius: 50%;
-    background: white;
-    color: #111;
-    font-weight: 900;
-    text-align: center;
-    line-height: 44px;
-    cursor: pointer;
-    transform: translate(-50%, -100%);
-    box-shadow: 0 8px 18px rgba(0,0,0,0.45);
-    z-index: 5;
-    user-select: none;
-  }
-  .pin:hover { transform: translate(-50%, -100%) scale(1.08); }
+    /* ===== 핀 ===== */
+    .pin {
+      position: absolute;
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      background: white;
+      color: #111;
+      font-weight: 900;
+      text-align: center;
+      line-height: 44px;
+      cursor: pointer;
+      transform: translate(-50%, -100%);
+      box-shadow: 0 8px 18px rgba(0,0,0,0.45);
+      z-index: 5;
+      user-select: none;
+    }
+    .pin:hover { transform: translate(-50%, -100%) scale(1.08); }
 
-  /* ===== 갤러리(썸네일 선택창) ===== */
-  #galleryOverlay{
-    position: fixed;
-    inset: 0;
-    z-index: 40;
-    display: none;
-    background-image: url("red_brick.png");
-    background-repeat: no-repeat;
-    background-size: cover;
-    background-position: center;
-  }
+    /* ===== 갤러리(썸네일 선택창) ===== */
+    #galleryOverlay{
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      display: none;
+      background-image: url("red_brick.jpg"); /* ✅ png → jpg로 수정 */
+      background-repeat: no-repeat;
+      background-size: cover;
+      background-position: center;
+    }
 
-  #galleryCard{
-    position: absolute;
-    left: 50%; top: 50%;
-    transform: translate(-50%, -50%);
-    width: min(980px, 92vw);
-    background: rgba(20,20,20,0.92);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 18px;
-    padding: 16px;
-    box-shadow: 0 25px 90px rgba(0,0,0,0.55);
-  }
+    #galleryCard{
+      position: absolute;
+      left: 50%; top: 50%;
+      transform: translate(-50%, -50%);
+      width: min(980px, 92vw);
+      background: rgba(20,20,20,0.92);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 18px;
+      padding: 16px;
+      box-shadow: 0 25px 90px rgba(0,0,0,0.55);
+    }
 
-  #galleryHeader{
-    display:flex;
-    align-items:center;
-    justify-content: space-between;
-    margin-bottom: 12px;
-    gap: 12px;
-  }
-  #placeTitle{
-    color:#fff;
-    font: 800 16px/1.2 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-    letter-spacing: 0.2px;
-  }
-  #galleryClose{
-    color:#fff;
-    font: 700 13px/1 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-    background: rgba(255,255,255,0.14);
-    padding: 8px 12px;
-    border-radius: 999px;
-    cursor: pointer;
-    user-select: none;
-  }
+    #galleryHeader{
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      gap: 12px;
+    }
+    #placeTitle{
+      color:#fff;
+      font-family: 'GmarketSansBold';
+      font-size: 18px;
+      line-height: 1.2;
+      letter-spacing: 0.2px;
+    }
+    #galleryClose{
+      color:#fff;
+      font-family: 'GmarketSansMedium';
+      font-size: 14px;
+      line-height: 1;
+      background: rgba(255,255,255,0.14);
+      padding: 10px 14px;
+      border-radius: 999px;
+      cursor: pointer;
+      user-select: none;
+      border: 1px solid rgba(255,255,255,0.14);
+    }
+    #galleryClose:hover{ filter: brightness(1.08); }
 
-  /* 원형 썸네일 */
-  #thumbRow{
-    padding: 18px 10px 10px;
-    justify-content: center;
-    align-content: center;
-  }
+    /* 원형 썸네일 */
+    #thumbRow{
+      padding: 18px 10px 10px;
+      justify-content: center;
+      align-content: center;
+    }
 
-  /* ✅ 1~5개: 한 줄 + 가로 스크롤 */
-  #thumbRow.mode-row{
-    display: flex;
-    gap: 36px;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    justify-content: center;
-    scrollbar-width: thin;
-  }
-  #thumbRow.mode-row::-webkit-scrollbar{ height: 8px; }
-  #thumbRow.mode-row::-webkit-scrollbar-thumb{
-    background: rgba(255,255,255,0.18);
-    border-radius: 999px;
-  }
+    /* ✅ 1~5개: 한 줄 + 가로 스크롤 */
+    #thumbRow.mode-row{
+      display: flex;
+      gap: 36px;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      justify-content: center;
+      scrollbar-width: thin;
+    }
+    #thumbRow.mode-row::-webkit-scrollbar{ height: 8px; }
+    #thumbRow.mode-row::-webkit-scrollbar-thumb{
+      background: rgba(255,255,255,0.18);
+      border-radius: 999px;
+    }
 
-  /* ✅ 6개 이상: 3열 그리드 */
-  #thumbRow.mode-grid{
-    display: grid;
-    grid-template-columns: repeat(3, 132px);
-    gap: 36px;
-    justify-content: center;
-  }
+    /* ✅ 6개 이상: 3열 그리드 */
+    #thumbRow.mode-grid{
+      display: grid;
+      grid-template-columns: repeat(3, 132px);
+      gap: 36px;
+      justify-content: center;
+    }
 
-  .thumb{
-    width: 132px; height: 132px;
-    border-radius: 999px;
-    cursor: pointer;
-    user-select: none;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.35);
-    border: 2px solid rgba(255,255,255,0.08);
-    transition: transform .12s ease, border-color .12s ease, filter .12s ease;
-    position: relative;
-    overflow: hidden;
-    background-size: cover;
-    background-position: center;
-    background-color: #6f778c;
-  }
-  .thumb:hover{
-    transform: translateY(-2px) scale(1.03);
-    border-color: rgba(255,255,255,0.35);
-    filter: brightness(1.05);
-  }
-  .thumb .badge{
-    position:absolute;
-    right: 10px;
-    top: 10px;
-    width: 28px; height: 28px;
-    border-radius: 999px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font: 900 14px/1 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-    background: rgba(0,0,0,0.55);
-    color: #fff;
-    border: 1px solid rgba(255,255,255,0.18);
-  }
-  #galleryHint{
-    margin-top: 10px;
-    color: rgba(255,255,255,0.75);
-    font: 13px/1.4 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-    text-align:center;
-  }
+    .thumb{
+      width: 132px; height: 132px;
+      border-radius: 999px;
+      cursor: pointer;
+      user-select: none;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+      border: 2px solid rgba(255,255,255,0.08);
+      transition: transform .12s ease, border-color .12s ease, filter .12s ease;
+      position: relative;
+      overflow: hidden;
+      background-size: cover;
+      background-position: center;
+      background-color: #6f778c;
+    }
+    .thumb:hover{
+      transform: translateY(-2px) scale(1.03);
+      border-color: rgba(255,255,255,0.35);
+      filter: brightness(1.05);
+    }
+    .thumb .badge{
+      position:absolute;
+      right: 10px;
+      top: 10px;
+      width: 28px; height: 28px;
+      border-radius: 999px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-family: 'GmarketSansBold';
+      font-size: 14px;
+      line-height: 1;
+      background: rgba(0,0,0,0.55);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.18);
+    }
+    #galleryHint{
+      margin-top: 10px;
+      color: rgba(255,255,255,0.75);
+      font-family: 'GmarketSansMedium';
+      font-size: 14px;
+      line-height: 1.4;
+      text-align:center;
+    }
 
-  /* ===== 인트로 ===== */
-  #introOverlay{
-    position: fixed;
-    inset: 0;
-    z-index: 200;
-    background: #000;
+    /* ===== 인트로 ===== */
+    #introOverlay{
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: #000;
 
-    /* ✅ 영상(100%)을 정확히 중앙정렬 */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+      /* ✅ 영상(100%)을 정확히 중앙정렬 */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
 
-  #introVideo{
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 12px;
-  }
+    #introVideo{
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 12px;
+    }
 
-  /* ✅ “지도로 들어가기” 버튼 (처음 숨김) */
-  #introSkipBtn{
-    position: fixed;
-    left: 50%;
-    bottom: 20%;
-    transform: translateX(-50%);
-    padding: 12px 18px;
-    border-radius: 14px;
-    background: rgba(255,255,255,255);
-    color: #000;
-font-family: "Noto Sans KR", "Apple SD Gothic Neo", sans-serif;
-font-weight: 800;
-font-size: 30px;
-line-height: 1;
-    border: 3px solid rgba(255,255,255,0.22);
-    cursor: pointer;
-    user-select: none;
-    z-index: 205;
-    display: none;
-  }
-  #introSkipBtn.show{
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-  }
-</style>
+    /* ✅ “돌아보기” 버튼 (처음 숨김) */
+    #introSkipBtn{
+      position: fixed;
+      left: 50%;
+      bottom: 20%;
+      transform: translateX(-50%);
+      padding: 14px 22px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.95);
+      color: #000;
+      font-family: 'GmarketSansBold';
+      font-size: 28px;
+      line-height: 1;
+      border: 3px solid rgba(255,255,255,0.22);
+      cursor: pointer;
+      user-select: none;
+      z-index: 205;
+      display: none; /* 처음엔 숨김 */
+      box-shadow: 0 16px 50px rgba(0,0,0,0.35);
+    }
+    #introSkipBtn.show{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #introSkipBtn:hover{ transform: translateX(-50%) scale(1.04); }
+  </style>
 </head>
 
 <body>
 
-<div id="viewerRoot"></div>
+  <div id="viewerRoot"></div>
 
-<!-- ===== 인트로 ===== -->
-<div id="introOverlay">
-  <video id="introVideo" autoplay muted playsinline>
-    <source src="intro.mp4" type="video/mp4">
-  </video>
+  <!-- ===== 인트로 ===== -->
+  <div id="introOverlay">
+    <video id="introVideo" autoplay muted playsinline>
+      <source src="intro.mp4" type="video/mp4">
+    </video>
 
-  <div id="introSkipBtn">돌아보기</div>
-</div>
-
-<!-- ✅ 항상 보이는 네비 -->
-<div id="topNav">
-  <div class="navBtn" id="btnToGallery">갤러리로</div>
-  <div class="navBtn" id="btnToMap">지도로</div>
-</div>
-
-<!-- ===== 지도 ===== -->
-<div id="mapOverlay">
-  <img src="map.png" alt="map">
-  <div class="pin" style="left:6.1%; top:37.7%;" data-place="p1">1</div>
-  <div class="pin" style="left:42.8%; top:32%;" data-place="p2">2</div>
-  <div class="pin" style="left:60.1%; top:38.1%;" data-place="p3">3</div>
-  <div class="pin" style="left:81%; top:77.2%;" data-place="p4">4</div>
-  <div class="pin" style="left:75%; top:29.3%;" data-place="p5">5</div>
-  <div class="pin" style="left:49.4%; top:60.3%;" data-place="p6">6</div>
-  <div class="pin" style="left:78%; top:59%;" data-place="p7">7</div>
-</div>
-
-<!-- ===== 갤러리 ===== -->
-<div id="galleryOverlay">
-  <div id="galleryCard">
-    <div id="galleryHeader">
-      <div id="placeTitle">이미지 선택</div>
-      <div id="galleryClose">닫기 ✕</div>
-    </div>
-    <div id="thumbRow"></div>
-    <div id="galleryHint">썸네일을 누르면 해당 360° 이미지로 이동합니다.</div>
+    <div id="introSkipBtn">돌아보기</div>
   </div>
-</div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <!-- ✅ 항상 보이는 네비 -->
+  <div id="topNav">
+    <div class="navBtn" id="btnToGallery">갤러리로</div>
+    <div class="navBtn" id="btnToMap">지도로</div>
+  </div>
 
-<script>
-/* =========================
-   1) 장소별 이미지 목록
-   ========================= */
-const PLACES = {
-  p1: { name: "비석문화마을", items: [
-    { pano: "p1_1.jpg", thumb: "p1_1.jpg" },
-    { pano: "p1_2.jpg", thumb: "p1_2.jpg" },
-    { pano: "p1_3.jpg", thumb: "p1_3.jpg" },
-    { pano: "p1_4.jpg", thumb: "p1_4.jpg" },
-    { pano: "p1_5.jpg", thumb: "p1_5.jpg" },
-    { pano: "p1_6.jpg", thumb: "p1_6.jpg" },
-  ]},
-  p2: { name: "한형석자유아동극장", items: [
-    { pano: "p2_1.jpg", thumb: "p2_1.jpg" },
-    { pano: "p2_2.jpg", thumb: "p2_2.jpg" },
-    { pano: "p2_3.jpg", thumb: "p2_3.jpg" },
-    { pano: "p2_4.jpg", thumb: "p2_4.jpg" },
-  ]},
-  p3: { name: "대통령관저", items: [
-    { pano: "p3_1.jpg", thumb: "p3_1.jpg" },
-    { pano: "p3_2.jpg", thumb: "p3_2.jpg" },
-    { pano: "p3_3.jpg", thumb: "p3_3.jpg" },
-    { pano: "p3_4.jpg", thumb: "p3_4.jpg" },
-  ]},
-  p4: { name: "부산 전차", items: [
-    { pano: "p4_1.jpg", thumb: "p4_1.jpg" },
-    { pano: "p4_2.jpg", thumb: "p4_2.jpg" },
-    { pano: "p4_3.jpg", thumb: "p4_3.jpg" },
-    { pano: "p4_4.jpg", thumb: "p4_4.jpg" },
-  ]},
-  p5: { name: "임시수도정부청사", items: [
-    { pano: "p5_1.jpg", thumb: "p5_1.jpg" },
-    { pano: "p5_2.jpg", thumb: "p5_2.jpg" },
-    { pano: "p5_3.jpg", thumb: "p5_3.jpg" },
-    { pano: "p5_4.jpg", thumb: "p5_4.jpg" },
-  ]},
-  // p6/p7은 아직 데이터 없어서 안내만
-  p6: { name: "준비중", items: [] },
-  p7: { name: "준비중", items: [] },
-};
+  <!-- ===== 지도 ===== -->
+  <div id="mapOverlay">
+    <img src="map.png" alt="map">
+    <div class="pin" style="left:6.1%; top:37.7%;" data-place="p1">1</div>
+    <div class="pin" style="left:42.8%; top:32%;" data-place="p2">2</div>
+    <div class="pin" style="left:60.1%; top:38.1%;" data-place="p3">3</div>
+    <div class="pin" style="left:81%; top:77.2%;" data-place="p4">4</div>
+    <div class="pin" style="left:75%; top:29.3%;" data-place="p5">5</div>
+    <div class="pin" style="left:49.4%; top:60.3%;" data-place="p6">6</div>
+    <div class="pin" style="left:78%; top:59%;" data-place="p7">7</div>
+  </div>
 
-/* =========================
-   2) 상태
-   ========================= */
-let lastPlaceKey = null;
+  <!-- ===== 갤러리 ===== -->
+  <div id="galleryOverlay">
+    <div id="galleryCard">
+      <div id="galleryHeader">
+        <div id="placeTitle">이미지 선택</div>
+        <div id="galleryClose">닫기 ✕</div>
+      </div>
+      <div id="thumbRow"></div>
+      <div id="galleryHint">썸네일을 누르면 해당 360° 이미지로 이동합니다.</div>
+    </div>
+  </div>
 
-const mapOverlay = document.getElementById("mapOverlay");
-const galleryOverlay = document.getElementById("galleryOverlay");
-const galleryClose = document.getElementById("galleryClose");
-const placeTitle = document.getElementById("placeTitle");
-const thumbRow = document.getElementById("thumbRow");
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 
-const btnToGallery = document.getElementById("btnToGallery");
-const btnToMap = document.getElementById("btnToMap");
+  <script>
+    /* =========================
+       1) 장소별 이미지 목록
+       ========================= */
+    const PLACES = {
+      p1: { name: "비석문화마을", items: [
+        { pano: "p1_1.jpg", thumb: "p1_1.jpg" },
+        { pano: "p1_2.jpg", thumb: "p1_2.jpg" },
+        { pano: "p1_3.jpg", thumb: "p1_3.jpg" },
+        { pano: "p1_4.jpg", thumb: "p1_4.jpg" },
+        { pano: "p1_5.jpg", thumb: "p1_5.jpg" },
+        { pano: "p1_6.jpg", thumb: "p1_6.jpg" },
+      ]},
+      p2: { name: "한형석자유아동극장", items: [
+        { pano: "p2_1.jpg", thumb: "p2_1.jpg" },
+        { pano: "p2_2.jpg", thumb: "p2_2.jpg" },
+        { pano: "p2_3.jpg", thumb: "p2_3.jpg" },
+        { pano: "p2_4.jpg", thumb: "p2_4.jpg" },
+      ]},
+      p3: { name: "대통령관저", items: [
+        { pano: "p3_1.jpg", thumb: "p3_1.jpg" },
+        { pano: "p3_2.jpg", thumb: "p3_2.jpg" },
+        { pano: "p3_3.jpg", thumb: "p3_3.jpg" },
+        { pano: "p3_4.jpg", thumb: "p3_4.jpg" },
+        { pano: "p3_5.jpg", thumb: "p3_5.jpg" },
+        { pano: "p3_6.jpg", thumb: "p3_6.jpg" },
+      ]},
+      p4: { name: "부산 전차", items: [
+        { pano: "p4_1.jpg", thumb: "p4_1.jpg" },
+        { pano: "p4_2.jpg", thumb: "p4_2.jpg" },
+      ]},
+      p5: { name: "임시수도정부청사", items: [
+        { pano: "p5_1.jpg", thumb: "p5_1.jpg" },
+        { pano: "p5_2.jpg", thumb: "p5_2.jpg" },
+        { pano: "p5_3.jpg", thumb: "p5_3.jpg" },
+        { pano: "p5_4.jpg", thumb: "p5_4.jpg" },
+      ]},
+      p6: { name: "이정표", items: [
+        { pano: "p6_1.jpg", thumb: "p6_1.jpg" },
+      ]},
+      // p7은 아직 데이터 없어서 안내만
+      p7: { name: "준비중", items: [] },
+    };
 
-function setNavState() {
-  if (lastPlaceKey) btnToGallery.classList.remove("disabled");
-  else btnToGallery.classList.add("disabled");
-}
+    /* =========================
+       2) 상태
+       ========================= */
+    let lastPlaceKey = null;
 
-/* =========================
-   3) 360 Viewer
-   ========================= */
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 2000);
-camera.position.set(0,0,0.1);
+    const mapOverlay = document.getElementById("mapOverlay");
+    const galleryOverlay = document.getElementById("galleryOverlay");
+    const galleryClose = document.getElementById("galleryClose");
+    const placeTitle = document.getElementById("placeTitle");
+    const thumbRow = document.getElementById("thumbRow");
 
-const renderer = new THREE.WebGLRenderer({ antialias:true });
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
-document.getElementById("viewerRoot").appendChild(renderer.domElement);
+    const btnToGallery = document.getElementById("btnToGallery");
+    const btnToMap = document.getElementById("btnToMap");
 
-const controls = new THREE.OrbitControls(camera, renderer.domElement);
-controls.enablePan = false;
-controls.enableZoom = false;
-controls.enableDamping = true;
-controls.dampingFactor = 0.05;
-controls.rotateSpeed = -0.35;
-
-renderer.domElement.addEventListener("wheel",(e)=>{
-  e.preventDefault();
-  camera.fov += e.deltaY * 0.05;
-  camera.fov = Math.max(30, Math.min(100, camera.fov));
-  camera.updateProjectionMatrix();
-},{passive:false});
-
-let sphere = null;
-let material = null;
-
-function loadPanorama(src){
-  const loader = new THREE.TextureLoader();
-  loader.load(src, (texture)=>{
-    if(!sphere){
-      const geo = new THREE.SphereGeometry(500,60,40);
-      geo.scale(-1,1,1);
-      material = new THREE.MeshBasicMaterial({ map:texture });
-      sphere = new THREE.Mesh(geo, material);
-      scene.add(sphere);
-    } else {
-      material.map = texture;
-      material.needsUpdate = true;
+    function setNavState() {
+      if (lastPlaceKey) btnToGallery.classList.remove("disabled");
+      else btnToGallery.classList.add("disabled");
     }
-  }, undefined, (err)=>{
-    console.error("이미지 로드 실패:", src, err);
-    alert("이미지 로드 실패: " + src + "\n파일이 같은 폴더에 있는지/이름이 정확한지 확인!");
-  });
-}
 
-// 시작 기본
-loadPanorama(PLACES.p1.items[0].pano);
+    /* =========================
+       3) 360 Viewer
+       ========================= */
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 2000);
+    camera.position.set(0,0,0.1);
 
-function animate(){
-  requestAnimationFrame(animate);
-  controls.update();
-  renderer.render(scene,camera);
-}
-animate();
+    const renderer = new THREE.WebGLRenderer({ antialias:true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+    document.getElementById("viewerRoot").appendChild(renderer.domElement);
 
-window.addEventListener("resize", ()=>{
-  camera.aspect = window.innerWidth/window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-});
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enablePan = false;
+    controls.enableZoom = false;
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.rotateSpeed = -0.35;
 
-/* =========================
-   4) UI
-   ========================= */
-function openMap() {
-  galleryOverlay.style.display = "none";
-  mapOverlay.style.display = "block";
-  setNavState();
-}
+    renderer.domElement.addEventListener("wheel",(e)=>{
+      e.preventDefault();
+      camera.fov += e.deltaY * 0.05;
+      camera.fov = Math.max(30, Math.min(100, camera.fov));
+      camera.updateProjectionMatrix();
+    },{passive:false});
 
-/* ===== 인트로 로직 ===== */
-const introOverlay = document.getElementById("introOverlay");
-const introVideo = document.getElementById("introVideo");
-const introSkipBtn = document.getElementById("introSkipBtn");
+    let sphere = null;
+    let material = null;
 
-let introLoopTimer = null;
-let introBtnTimer = null;
+    function loadPanorama(src){
+      const loader = new THREE.TextureLoader();
+      loader.load(src, (texture)=>{
+        if(!sphere){
+          const geo = new THREE.SphereGeometry(500,60,40);
+          geo.scale(-1,1,1);
+          material = new THREE.MeshBasicMaterial({ map:texture });
+          sphere = new THREE.Mesh(geo, material);
+          scene.add(sphere);
+        } else {
+          material.map = texture;
+          material.needsUpdate = true;
+        }
+      }, undefined, (err)=>{
+        console.error("이미지 로드 실패:", src, err);
+        alert("이미지 로드 실패: " + src + "\n파일이 같은 폴더에 있는지/이름이 정확한지 확인!");
+      });
+    }
 
-function tryPlayIntro(){
-  const p = introVideo.play();
-  if (p && typeof p.catch === "function") p.catch(()=>{});
-}
+    // 시작 기본
+    loadPanorama(PLACES.p1.items[0].pano);
 
-function startIntroTimers(){
-  // 10초마다 0초로 리셋
-  if (introLoopTimer) clearInterval(introLoopTimer);
-  introLoopTimer = setInterval(() => {
-    try {
-      introVideo.currentTime = 0;
-      tryPlayIntro();
-    } catch (e) {}
-  }, 10000);
+    function animate(){
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene,camera);
+    }
+    animate();
 
-  // 2초 후 버튼 자동 표시
-  if (introBtnTimer) clearTimeout(introBtnTimer);
-  introBtnTimer = setTimeout(() => {
-    introSkipBtn.classList.add("show");
-  }, 2000);
-}
+    window.addEventListener("resize", ()=>{
+      camera.aspect = window.innerWidth/window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
 
-// 자동재생 시도 + 타이머 시작
-tryPlayIntro();
-startIntroTimers();
-
-// 화면 클릭 시 즉시 버튼 표시 + (자동재생 막혔으면 재생 시도)
-introOverlay.addEventListener("click", () => {
-  introSkipBtn.classList.add("show");
-  tryPlayIntro();
-}, { passive: true });
-
-// 버튼 클릭 → 지도 진입 + 타이머 정리
-introSkipBtn.addEventListener("click", (e) => {
-  e.stopPropagation();
-
-  if (introLoopTimer) clearInterval(introLoopTimer);
-  if (introBtnTimer) clearTimeout(introBtnTimer);
-
-  introOverlay.style.display = "none";
-  openMap();
-});
-
-/* ===== 갤러리 ===== */
-function openGallery(placeKey) {
-  const place = PLACES[placeKey];
-  if(!place || !place.items || place.items.length === 0){
-    alert("이 장소는 아직 준비중입니다 🙂");
-    return;
-  }
-
-  lastPlaceKey = placeKey;
-
-  placeTitle.textContent = place.name + " - 이미지 선택";
-  thumbRow.innerHTML = "";
-
-  thumbRow.classList.remove("mode-row", "mode-grid");
-  if (place.items.length <= 5) thumbRow.classList.add("mode-row");
-  else thumbRow.classList.add("mode-grid");
-
-  place.items.forEach((item, idx)=>{
-    const btn = document.createElement("div");
-    btn.className = "thumb";
-    btn.style.backgroundImage = `url("${item.thumb || item.pano}")`;
-
-    const badge = document.createElement("div");
-    badge.className = "badge";
-    badge.textContent = (idx + 1);
-    btn.appendChild(badge);
-
-    btn.addEventListener("click", ()=>{
-      loadPanorama(item.pano);
+    /* =========================
+       4) UI
+       ========================= */
+    function openMap() {
       galleryOverlay.style.display = "none";
+      mapOverlay.style.display = "block";
+      setNavState();
+    }
+
+    /* ===== 인트로 로직 ===== */
+    const introOverlay = document.getElementById("introOverlay");
+    const introVideo = document.getElementById("introVideo");
+    const introSkipBtn = document.getElementById("introSkipBtn");
+
+    let introLoopTimer = null;
+    let introBtnTimer = null;
+
+    function tryPlayIntro(){
+      const p = introVideo.play();
+      if (p && typeof p.catch === "function") p.catch(()=>{});
+    }
+
+    function startIntroTimers(){
+      // 10초마다 0초로 리셋
+      if (introLoopTimer) clearInterval(introLoopTimer);
+      introLoopTimer = setInterval(() => {
+        try {
+          introVideo.currentTime = 0;
+          tryPlayIntro();
+        } catch (e) {}
+      }, 10000);
+
+      // 2초 후 버튼 자동 표시
+      if (introBtnTimer) clearTimeout(introBtnTimer);
+      introBtnTimer = setTimeout(() => {
+        introSkipBtn.classList.add("show");
+      }, 2000);
+    }
+
+    // 자동재생 시도 + 타이머 시작
+    tryPlayIntro();
+    startIntroTimers();
+
+    // 화면 클릭 시 즉시 버튼 표시 + (자동재생 막혔으면 재생 시도)
+    introOverlay.addEventListener("click", () => {
+      introSkipBtn.classList.add("show");
+      tryPlayIntro();
+    }, { passive: true });
+
+    // 버튼 클릭 → 지도 진입 + 타이머 정리
+    introSkipBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+
+      if (introLoopTimer) clearInterval(introLoopTimer);
+      if (introBtnTimer) clearTimeout(introBtnTimer);
+
+      introOverlay.style.display = "none";
+      openMap();
+    });
+
+    /* ===== 갤러리 ===== */
+    function openGallery(placeKey) {
+      const place = PLACES[placeKey];
+      if(!place || !place.items || place.items.length === 0){
+        alert("이 장소는 아직 준비중입니다 🙂");
+        return;
+      }
+
+      lastPlaceKey = placeKey;
+
+      placeTitle.textContent = place.name + " - 이미지 선택";
+      thumbRow.innerHTML = "";
+
+      thumbRow.classList.remove("mode-row", "mode-grid");
+      if (place.items.length <= 5) thumbRow.classList.add("mode-row");
+      else thumbRow.classList.add("mode-grid");
+
+      place.items.forEach((item, idx)=>{
+        const btn = document.createElement("div");
+        btn.className = "thumb";
+        btn.style.backgroundImage = `url("${item.thumb || item.pano}")`;
+
+        const badge = document.createElement("div");
+        badge.className = "badge";
+        badge.textContent = (idx + 1);
+        btn.appendChild(badge);
+
+        btn.addEventListener("click", ()=>{
+          loadPanorama(item.pano);
+          galleryOverlay.style.display = "none";
+          mapOverlay.style.display = "none";
+          setNavState();
+        });
+
+        thumbRow.appendChild(btn);
+      });
+
+      galleryOverlay.style.display = "block";
       mapOverlay.style.display = "none";
+      setNavState();
+    }
+
+    document.querySelectorAll(".pin").forEach(pin=>{
+      pin.addEventListener("click", ()=>{
+        openGallery(pin.getAttribute("data-place"));
+      });
+    });
+
+    galleryClose.addEventListener("click", ()=>{
+      galleryOverlay.style.display = "none";
+      mapOverlay.style.display = "block";
       setNavState();
     });
 
-    thumbRow.appendChild(btn);
-  });
+    /* ===== 상단 네비 ===== */
+    btnToMap.addEventListener("click", ()=> openMap());
 
-  galleryOverlay.style.display = "block";
-  mapOverlay.style.display = "none";
-  setNavState();
-}
+    btnToGallery.addEventListener("click", ()=>{
+      if (!lastPlaceKey) return;
+      openGallery(lastPlaceKey);
+    });
 
-document.querySelectorAll(".pin").forEach(pin=>{
-  pin.addEventListener("click", ()=>{
-    openGallery(pin.getAttribute("data-place"));
-  });
-});
+    /* ESC */
+    window.addEventListener("keydown", (e)=>{
+      if(e.key === "Escape"){
+        if (galleryOverlay.style.display === "block") {
+          galleryOverlay.style.display = "none";
+          mapOverlay.style.display = "block";
+        } else if (mapOverlay.style.display === "block") {
+          mapOverlay.style.display = "none";
+        }
+        setNavState();
+      }
+    });
 
-galleryClose.addEventListener("click", ()=>{
-  galleryOverlay.style.display = "none";
-  mapOverlay.style.display = "block";
-  setNavState();
-});
-
-/* ===== 상단 네비 ===== */
-btnToMap.addEventListener("click", ()=> openMap());
-
-btnToGallery.addEventListener("click", ()=>{
-  if (!lastPlaceKey) return;
-  openGallery(lastPlaceKey);
-});
-
-/* ESC */
-window.addEventListener("keydown", (e)=>{
-  if(e.key === "Escape"){
-    if (galleryOverlay.style.display === "block") {
-      galleryOverlay.style.display = "none";
-      mapOverlay.style.display = "block";
-    } else if (mapOverlay.style.display === "block") {
-      mapOverlay.style.display = "none";
-    }
     setNavState();
-  }
-});
-
-setNavState();
-</script>
+  </script>
 
 </body>
 </html>
